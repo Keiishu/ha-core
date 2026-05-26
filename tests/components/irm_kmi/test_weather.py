@@ -1,10 +1,14 @@
 """Test for the weather entity of the IRM KMI integration."""
 
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
+from irm_kmi_api import ExtendedForecast
 import pytest
 from syrupy.assertion import SnapshotAssertion
 
+from homeassistant.components.irm_kmi.coordinator import IrmKmiCoordinator
+from homeassistant.components.irm_kmi.data import ProcessedCoordinatorData
+from homeassistant.components.irm_kmi.weather import IrmKmiWeather
 from homeassistant.components.weather import (
     DOMAIN as WEATHER_DOMAIN,
     SERVICE_GET_FORECASTS,
@@ -14,6 +18,22 @@ from homeassistant.core import HomeAssistant
 import homeassistant.helpers.entity_registry as er
 
 from tests.common import MockConfigEntry, snapshot_platform
+
+
+def _create_weather_with_daily_forecast(
+    hass: HomeAssistant,
+    mock_config_entry: MockConfigEntry,
+    daily_forecast: list[ExtendedForecast] | None,
+) -> IrmKmiWeather:
+    """Create the weather entity with the provided daily forecast data."""
+    coordinator = IrmKmiCoordinator(hass, mock_config_entry, MagicMock())
+    coordinator.data = ProcessedCoordinatorData(
+        current_weather={},
+        country="BE",
+        daily_forecast=daily_forecast,
+    )
+    mock_config_entry.runtime_data = coordinator
+    return IrmKmiWeather(mock_config_entry)
 
 
 @pytest.mark.freeze_time("2023-12-28T15:30:00+01:00")
@@ -32,6 +52,46 @@ async def test_weather_nl(
     await hass.async_block_till_done()
 
     await snapshot_platform(hass, entity_registry, snapshot, mock_config_entry.entry_id)
+
+
+async def test_daily_forecast_uses_night_first_low_temperature(
+    hass: HomeAssistant,
+    mock_config_entry: MockConfigEntry,
+) -> None:
+    """Test daily forecast uses the night first low temperature."""
+    night_forecast: ExtendedForecast = {
+        "datetime": "2026-01-21T00:00:00+01:00",
+        "is_daytime": False,
+        "native_templow": 8,
+        "native_temperature": 8,
+    }
+    day_forecast: ExtendedForecast = {
+        "datetime": "2026-01-21T12:00:00+01:00",
+        "is_daytime": True,
+        "native_templow": None,
+        "native_temperature": 7,
+    }
+
+    weather = _create_weather_with_daily_forecast(
+        hass,
+        mock_config_entry,
+        [night_forecast, day_forecast],
+    )
+
+    assert weather.daily_forecast() == [
+        {
+            "datetime": "2026-01-21T00:00:00+01:00",
+            "is_daytime": False,
+            "native_templow": 8,
+            "native_temperature": 8,
+        },
+        {
+            "datetime": "2026-01-21T12:00:00+01:00",
+            "is_daytime": True,
+            "native_templow": 7,
+            "native_temperature": 8,
+        },
+    ]
 
 
 @pytest.mark.parametrize(
