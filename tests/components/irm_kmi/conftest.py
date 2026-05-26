@@ -4,7 +4,7 @@ from collections.abc import Generator
 import json
 from unittest.mock import MagicMock, patch
 
-from irm_kmi_api import IrmKmiApiError
+from irm_kmi_api import IrmKmiApiError, PollenParser
 import pytest
 
 from homeassistant.components.irm_kmi.const import DOMAIN
@@ -83,6 +83,7 @@ def mock_irm_kmi_api(request: pytest.FixtureRequest) -> Generator[MagicMock]:
     ) as irm_kmi_api_mock:
         irm_kmi = irm_kmi_api_mock.return_value
         irm_kmi.get_forecasts_coord.return_value = forecast
+        irm_kmi.get_pollen.return_value = PollenParser.get_unavailable_data()
         yield irm_kmi
 
 
@@ -91,9 +92,15 @@ def mock_irm_kmi_api_nl():
     """Mock get_forecasts_coord() to return a Netherlands forecast."""
     fixture: str = "forecast_nl.json"
     forecast = json.loads(load_fixture(fixture, "irm_kmi"))
-    with patch(
-        "homeassistant.components.irm_kmi.coordinator.IrmKmiApiClientHa.get_forecasts_coord",
-        return_value=forecast,
+    with (
+        patch(
+            "homeassistant.components.irm_kmi.coordinator.IrmKmiApiClientHa.get_forecasts_coord",
+            return_value=forecast,
+        ),
+        patch(
+            "homeassistant.components.irm_kmi.coordinator.IrmKmiApiClientHa.get_pollen",
+            return_value=PollenParser.get_unavailable_data(),
+        ),
     ):
         yield
 
@@ -103,9 +110,15 @@ def mock_irm_kmi_api_high_low_temp():
     """Mock get_forecasts_coord() to return high_low_temp forecast."""
     fixture: str = "high_low_temp.json"
     forecast = json.loads(load_fixture(fixture, "irm_kmi"))
-    with patch(
-        "homeassistant.components.irm_kmi.coordinator.IrmKmiApiClientHa.get_forecasts_coord",
-        return_value=forecast,
+    with (
+        patch(
+            "homeassistant.components.irm_kmi.coordinator.IrmKmiApiClientHa.get_forecasts_coord",
+            return_value=forecast,
+        ),
+        patch(
+            "homeassistant.components.irm_kmi.coordinator.IrmKmiApiClientHa.get_pollen",
+            return_value=PollenParser.get_unavailable_data(),
+        ),
     ):
         yield
 

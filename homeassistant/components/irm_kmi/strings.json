@@ -22,6 +22,94 @@
       }
     }
   },
+  "entity": {
+    "sensor": {
+      "pollen_alder": {
+        "name": "Alder pollen",
+        "state": {
+          "active": "Active",
+          "green": "Green",
+          "none": "None",
+          "orange": "Orange",
+          "purple": "Purple",
+          "red": "Red",
+          "yellow": "Yellow"
+        }
+      },
+      "pollen_ash": {
+        "name": "Ash pollen",
+        "state": {
+          "active": "Active",
+          "green": "Green",
+          "none": "None",
+          "orange": "Orange",
+          "purple": "Purple",
+          "red": "Red",
+          "yellow": "Yellow"
+        }
+      },
+      "pollen_birch": {
+        "name": "Birch pollen",
+        "state": {
+          "active": "Active",
+          "green": "Green",
+          "none": "None",
+          "orange": "Orange",
+          "purple": "Purple",
+          "red": "Red",
+          "yellow": "Yellow"
+        }
+      },
+      "pollen_grasses": {
+        "name": "Grass pollen",
+        "state": {
+          "active": "Active",
+          "green": "Green",
+          "none": "None",
+          "orange": "Orange",
+          "purple": "Purple",
+          "red": "Red",
+          "yellow": "Yellow"
+        }
+      },
+      "pollen_hazel": {
+        "name": "Hazel pollen",
+        "state": {
+          "active": "Active",
+          "green": "Green",
+          "none": "None",
+          "orange": "Orange",
+          "purple": "Purple",
+          "red": "Red",
+          "yellow": "Yellow"
+        }
+      },
+      "pollen_mugwort": {
+        "name": "Mugwort pollen",
+        "state": {
+          "active": "Active",
+          "green": "Green",
+          "none": "None",
+          "orange": "Orange",
+          "purple": "Purple",
+          "red": "Red",
+          "yellow": "Yellow"
+        }
+      },
+      "pollen_oak": {
+        "name": "Oak pollen",
+        "state": {
+          "active": "Active",
+          "green": "Green",
+          "none": "None",
+          "orange": "Orange",
+          "purple": "Purple",
+          "red": "Red",
+          "yellow": "Yellow"
+        }
+      }
+    }
+  },
   "options": {
     "step": {
       "init": {

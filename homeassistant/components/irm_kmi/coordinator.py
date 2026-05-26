@@ -3,7 +3,7 @@
 from datetime import datetime, timedelta
 import logging
 
-from irm_kmi_api import IrmKmiApiClientHa, IrmKmiApiError
+from irm_kmi_api import IrmKmiApiClientHa, IrmKmiApiError, PollenParser
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_LATITUDE, ATTR_LONGITUDE, CONF_LOCATION
@@ -93,9 +93,23 @@ class IrmKmiCoordinator(TimestampDataUpdateCoordinator[ProcessedCoordinatorData]
         tz = await dt_util.async_get_time_zone("Europe/Brussels")
         lang = preferred_language(self.hass, self.config_entry)
 
+        try:
+            pollen = await self._api.get_pollen()
+        except IrmKmiApiError as err:
+            _LOGGER.warning(
+                "Could not get pollen data from the API: %s, keeping the same data",
+                err,
+            )
+            pollen = (
+                self.data.pollen
+                if self.data is not None
+                else PollenParser.get_unavailable_data()
+            )
+
         return ProcessedCoordinatorData(
             current_weather=self._api.get_current_weather(tz),
             daily_forecast=self._api.get_daily_forecast(tz, lang),
             hourly_forecast=self._api.get_hourly_forecast(tz),
             country=self._api.get_country(),
+            pollen=pollen,
         )

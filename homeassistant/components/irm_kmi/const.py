@@ -2,6 +2,8 @@
 
 from typing import Final
 
+from irm_kmi_api import PollenName
+
 from homeassistant.components.weather import (
     ATTR_CONDITION_CLEAR_NIGHT,
     ATTR_CONDITION_CLOUDY,
@@ -17,7 +19,7 @@ from homeassistant.components.weather import (
 from homeassistant.const import Platform, __version__
 
 DOMAIN: Final = "irm_kmi"
-PLATFORMS: Final = [Platform.WEATHER]
+PLATFORMS: Final = [Platform.SENSOR, Platform.WEATHER]
 
 OUT_OF_BENELUX: Final = [
     "außerhalb der Benelux (Brussels)",
@@ -29,6 +31,16 @@ LANGS: Final = ["en", "fr", "nl", "de"]
 
 CONF_LANGUAGE_OVERRIDE: Final = "language_override"
 CONF_LANGUAGE_OVERRIDE_OPTIONS: Final = ["none", "fr", "nl", "de", "en"]
+
+POLLEN_TO_ICON_MAP: Final = {
+    PollenName.ALDER: "mdi:tree",
+    PollenName.ASH: "mdi:tree",
+    PollenName.BIRCH: "mdi:tree",
+    PollenName.GRASSES: "mdi:grass",
+    PollenName.HAZEL: "mdi:tree",
+    PollenName.MUGWORT: "mdi:sprout",
+    PollenName.OAK: "mdi:tree",
+}
 
 # Dict to map ('ww', 'dayNight') tuple from IRM KMI to HA conditions.
 IRM_KMI_TO_HA_CONDITION_MAP: Final = {

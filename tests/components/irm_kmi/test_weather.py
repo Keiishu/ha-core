@@ -1,6 +1,6 @@
 """Test for the weather entity of the IRM KMI integration."""
 
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from syrupy.assertion import SnapshotAssertion
@@ -9,7 +9,7 @@ from homeassistant.components.weather import (
     DOMAIN as WEATHER_DOMAIN,
     SERVICE_GET_FORECASTS,
 )
-from homeassistant.const import ATTR_ENTITY_ID
+from homeassistant.const import ATTR_ENTITY_ID, Platform
 from homeassistant.core import HomeAssistant
 import homeassistant.helpers.entity_registry as er
 
@@ -27,7 +27,8 @@ async def test_weather_nl(
     """Test weather with forecast from the Netherland."""
     mock_config_entry.add_to_hass(hass)
 
-    await hass.config_entries.async_setup(mock_config_entry.entry_id)
+    with patch("homeassistant.components.irm_kmi.PLATFORMS", [Platform.WEATHER]):
+        await hass.config_entries.async_setup(mock_config_entry.entry_id)
     await hass.async_block_till_done()
 
     await snapshot_platform(hass, entity_registry, snapshot, mock_config_entry.entry_id)
