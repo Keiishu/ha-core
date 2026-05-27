@@ -36,11 +36,16 @@ async def test_pollen_sensors(
     entries = er.async_entries_for_config_entry(
         entity_registry, mock_config_entry.entry_id
     )
-    sensor_entries = [entry for entry in entries if entry.domain == "sensor"]
+    pollen_translation_keys = {f"pollen_{pollen.value}" for pollen in PollenName}
+    pollen_sensor_entries = [
+        entry
+        for entry in entries
+        if entry.domain == "sensor" and entry.translation_key in pollen_translation_keys
+    ]
 
-    assert {entry.translation_key for entry in sensor_entries} == {
-        f"pollen_{pollen.value}" for pollen in PollenName
-    }
-    assert {entry.unique_id for entry in sensor_entries} == {
+    assert {
+        entry.translation_key for entry in pollen_sensor_entries
+    } == pollen_translation_keys
+    assert {entry.unique_id for entry in pollen_sensor_entries} == {
         f"city country_pollen_{pollen.value}" for pollen in PollenName
     }
