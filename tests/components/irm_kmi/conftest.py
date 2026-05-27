@@ -84,6 +84,7 @@ def mock_irm_kmi_api(request: pytest.FixtureRequest) -> Generator[MagicMock]:
         irm_kmi = irm_kmi_api_mock.return_value
         irm_kmi.get_forecasts_coord.return_value = forecast
         irm_kmi.get_pollen.return_value = PollenParser.get_unavailable_data()
+        irm_kmi.get_warnings.return_value = []
         yield irm_kmi
 
 

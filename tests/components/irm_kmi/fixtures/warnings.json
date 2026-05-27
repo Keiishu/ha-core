@@ -1,0 +1,46 @@
+{
+  "for": {
+    "warning": [
+      {
+        "warningType": {
+          "id": "7",
+          "name": {
+            "fr": "Brouillard",
+            "nl": "Mist",
+            "en": "Fog",
+            "de": "Nebel"
+          }
+        },
+        "warningLevel": "1",
+        "text": {
+          "fr": "Des bancs de brouillard givrant pourront limiter la visibilité.",
+          "nl": "Aanvriezende mistbanken kunnen het zicht beperken.",
+          "en": "Local fog is expected.",
+          "de": "Es wird örtlich Nebel erwartet."
+        },
+        "fromTimestamp": "2026-01-12T07:00:00+01:00",
+        "toTimestamp": "2026-01-12T12:00:00+01:00"
+      },
+      {
+        "warningType": {
+          "id": "2",
+          "name": {
+            "fr": "Conditions glissantes",
+            "nl": "Gladheid",
+            "en": "Ice or snow",
+            "de": "Glätte"
+          }
+        },
+        "warningLevel": "1",
+        "text": {
+          "fr": "Le sol peut devenir glissant.",
+          "nl": "De grond kan glad worden.",
+          "en": "The ground may become slippery.",
+          "de": "Der Boden kann glatt werden."
+        },
+        "fromTimestamp": "2026-01-12T07:00:00+01:00",
+        "toTimestamp": "2026-01-12T13:00:00+01:00"
+      }
+    ]
+  }
+}
