@@ -2,7 +2,7 @@
 
 import logging
 
-from irm_kmi_api import IrmKmiApiClient, IrmKmiApiError
+from irm_kmi_api import IrmKmiApiClient, IrmKmiApiError, RadarStyle
 import voluptuous as vol
 
 from homeassistant.config_entries import (
@@ -29,6 +29,10 @@ from homeassistant.helpers.selector import (
 from .const import (
     CONF_LANGUAGE_OVERRIDE,
     CONF_LANGUAGE_OVERRIDE_OPTIONS,
+    CONF_RADAR_DARK_MODE,
+    CONF_RADAR_STYLE,
+    DEFAULT_RADAR_DARK_MODE,
+    DEFAULT_RADAR_STYLE,
     DOMAIN,
     OUT_OF_BENELUX,
     USER_AGENT,
@@ -129,7 +133,25 @@ class IrmKmiOptionFlow(OptionsFlowWithReload):
                             mode=SelectSelectorMode.DROPDOWN,
                             translation_key=CONF_LANGUAGE_OVERRIDE,
                         )
-                    )
+                    ),
+                    vol.Optional(
+                        CONF_RADAR_STYLE,
+                        default=self.config_entry.options.get(
+                            CONF_RADAR_STYLE, DEFAULT_RADAR_STYLE
+                        ),
+                    ): SelectSelector(
+                        SelectSelectorConfig(
+                            options=[style.value for style in RadarStyle],
+                            mode=SelectSelectorMode.DROPDOWN,
+                            translation_key=CONF_RADAR_STYLE,
+                        )
+                    ),
+                    vol.Optional(
+                        CONF_RADAR_DARK_MODE,
+                        default=self.config_entry.options.get(
+                            CONF_RADAR_DARK_MODE, DEFAULT_RADAR_DARK_MODE
+                        ),
+                    ): bool,
                 }
             ),
         )

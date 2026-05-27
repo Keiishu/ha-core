@@ -130,3 +130,19 @@ async def test_pollen_error_keeps_existing_data(
     result = await coordinator.process_api_data()
 
     assert result.pollen == previous_pollen
+
+
+async def test_refresh_succeeds_even_when_radar_animation_fails(
+    hass: HomeAssistant,
+    mock_config_entry: MockConfigEntry,
+) -> None:
+    """Test weather data is processed when refreshing radar animation fails."""
+    api_client = _api_client_with_fixture("forecast.json")
+    api_client.get_animation_data = MagicMock(side_effect=ValueError)
+    api_client.get_pollen = AsyncMock(return_value=PollenParser.get_unavailable_data())
+    coordinator = IrmKmiCoordinator(hass, mock_config_entry, api_client)
+
+    result = await coordinator.process_api_data()
+
+    assert result.animation is None
+    assert result.current_weather["condition"] == ATTR_CONDITION_CLOUDY

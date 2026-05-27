@@ -2,7 +2,7 @@
 
 from typing import Final
 
-from irm_kmi_api import PollenName
+from irm_kmi_api import PollenName, RadarStyle
 
 from homeassistant.components.weather import (
     ATTR_CONDITION_CLEAR_NIGHT,
@@ -19,7 +19,12 @@ from homeassistant.components.weather import (
 from homeassistant.const import Platform, __version__
 
 DOMAIN: Final = "irm_kmi"
-PLATFORMS: Final = [Platform.BINARY_SENSOR, Platform.SENSOR, Platform.WEATHER]
+PLATFORMS: Final = [
+    Platform.BINARY_SENSOR,
+    Platform.CAMERA,
+    Platform.SENSOR,
+    Platform.WEATHER,
+]
 
 OUT_OF_BENELUX: Final = [
     "außerhalb der Benelux (Brussels)",
@@ -31,6 +36,10 @@ LANGS: Final = ["en", "fr", "nl", "de"]
 
 CONF_LANGUAGE_OVERRIDE: Final = "language_override"
 CONF_LANGUAGE_OVERRIDE_OPTIONS: Final = ["none", "fr", "nl", "de", "en"]
+CONF_RADAR_DARK_MODE: Final = "radar_dark_mode"
+CONF_RADAR_STYLE: Final = "radar_style"
+DEFAULT_RADAR_DARK_MODE: Final = False
+DEFAULT_RADAR_STYLE: Final = RadarStyle.OPTION_STYLE_STD.value
 
 POLLEN_TO_ICON_MAP: Final = {
     PollenName.ALDER: "mdi:tree",

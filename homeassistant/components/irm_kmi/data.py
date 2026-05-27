@@ -7,6 +7,7 @@ from irm_kmi_api import (
     ExtendedForecast,
     PollenLevel,
     PollenName,
+    RainGraph,
     WarningData,
 )
 
@@ -19,6 +20,7 @@ class ProcessedCoordinatorData:
 
     current_weather: CurrentWeatherData
     country: str
+    animation: RainGraph | None = None
     pollen: dict[PollenName, PollenLevel | None] = field(default_factory=dict)
     warnings: list[WarningData] = field(default_factory=list)
     hourly_forecast: list[Forecast] = field(default_factory=list)

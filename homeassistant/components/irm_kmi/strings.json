@@ -1,6 +1,8 @@
 {
   "common": {
-    "language_override_description": "Override the Home Assistant language for the textual weather forecast."
+    "language_override_description": "Override the Home Assistant language for the textual weather forecast.",
+    "radar_dark_mode_description": "Use the dark radar map style.",
+    "radar_style_description": "Select the map style for the radar camera."
   },
   "config": {
     "abort": {
@@ -26,6 +28,11 @@
     "binary_sensor": {
       "warning": {
         "name": "Warning"
+      }
+    },
+    "camera": {
+      "radar": {
+        "name": "Radar"
       }
     },
     "sensor": {
@@ -122,10 +129,14 @@
     "step": {
       "init": {
         "data": {
-          "language_override": "[%key:common::config_flow::data::language%]"
+          "language_override": "[%key:common::config_flow::data::language%]",
+          "radar_dark_mode": "Dark radar map",
+          "radar_style": "Radar style"
         },
         "data_description": {
-          "language_override": "[%key:component::irm_kmi::common::language_override_description%]"
+          "language_override": "[%key:component::irm_kmi::common::language_override_description%]",
+          "radar_dark_mode": "[%key:component::irm_kmi::common::radar_dark_mode_description%]",
+          "radar_style": "[%key:component::irm_kmi::common::radar_style_description%]"
         },
         "title": "Options"
       }
@@ -139,6 +150,14 @@
         "fr": "French",
         "nl": "Dutch",
         "none": "Follow Home Assistant server language"
+      }
+    },
+    "radar_style": {
+      "options": {
+        "contrast_style": "High contrast",
+        "satellite_style": "Satellite map",
+        "standard_style": "Standard",
+        "yellow_red_style": "Yellow-red"
       }
     }
   },

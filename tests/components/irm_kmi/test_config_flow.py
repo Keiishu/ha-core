@@ -2,9 +2,15 @@
 
 from unittest.mock import MagicMock
 
+from irm_kmi_api import RadarStyle
 import pytest
 
-from homeassistant.components.irm_kmi.const import CONF_LANGUAGE_OVERRIDE, DOMAIN
+from homeassistant.components.irm_kmi.const import (
+    CONF_LANGUAGE_OVERRIDE,
+    CONF_RADAR_DARK_MODE,
+    CONF_RADAR_STYLE,
+    DOMAIN,
+)
 from homeassistant.config_entries import SOURCE_USER
 from homeassistant.const import (
     ATTR_LATITUDE,
@@ -148,4 +154,8 @@ async def test_option_flow(
     )
 
     assert result["type"] is FlowResultType.CREATE_ENTRY
-    assert result["data"] == {CONF_LANGUAGE_OVERRIDE: "none"}
+    assert result["data"] == {
+        CONF_LANGUAGE_OVERRIDE: "none",
+        CONF_RADAR_DARK_MODE: False,
+        CONF_RADAR_STYLE: RadarStyle.OPTION_STYLE_STD.value,
+    }

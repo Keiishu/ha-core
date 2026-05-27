@@ -3,7 +3,13 @@
 from datetime import datetime, timedelta
 import logging
 
-from irm_kmi_api import IrmKmiApiClientHa, IrmKmiApiError, PollenParser
+from irm_kmi_api import (
+    IrmKmiApiClientHa,
+    IrmKmiApiError,
+    PollenParser,
+    RadarStyle,
+    RainGraph,
+)
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_LATITUDE, ATTR_LONGITUDE, CONF_LOCATION
@@ -15,6 +21,12 @@ from homeassistant.helpers.update_coordinator import (
 from homeassistant.util import dt as dt_util
 from homeassistant.util.dt import utcnow
 
+from .const import (
+    CONF_RADAR_DARK_MODE,
+    CONF_RADAR_STYLE,
+    DEFAULT_RADAR_DARK_MODE,
+    DEFAULT_RADAR_STYLE,
+)
 from .data import ProcessedCoordinatorData
 from .utils import preferred_language
 
@@ -43,6 +55,15 @@ class IrmKmiCoordinator(TimestampDataUpdateCoordinator[ProcessedCoordinatorData]
         self._api = api_client
         self._location = entry.data[CONF_LOCATION]
         self._last_successful_data_update: datetime | None = None
+        self._radar_dark_mode = entry.options.get(
+            CONF_RADAR_DARK_MODE, DEFAULT_RADAR_DARK_MODE
+        )
+        try:
+            self._radar_style = RadarStyle(
+                entry.options.get(CONF_RADAR_STYLE, DEFAULT_RADAR_STYLE)
+            )
+        except ValueError:
+            self._radar_style = RadarStyle(DEFAULT_RADAR_STYLE)
 
     async def _async_update_data(self) -> ProcessedCoordinatorData:
         """Fetch data from API endpoint.
@@ -92,6 +113,7 @@ class IrmKmiCoordinator(TimestampDataUpdateCoordinator[ProcessedCoordinatorData]
         """From the API data, create the object that will be used in the entities."""
         tz = await dt_util.async_get_time_zone("Europe/Brussels")
         lang = preferred_language(self.hass, self.config_entry)
+        country = self._api.get_country()
 
         try:
             pollen = await self._api.get_pollen()
@@ -106,11 +128,27 @@ class IrmKmiCoordinator(TimestampDataUpdateCoordinator[ProcessedCoordinatorData]
                 else PollenParser.get_unavailable_data()
             )
 
+        try:
+            radar_animation = self._api.get_animation_data(
+                tz, lang, self._radar_style, self._radar_dark_mode
+            )
+            animation = await RainGraph(
+                radar_animation,
+                country=country,
+                style=self._radar_style,
+                tz=tz,
+                dark_mode=self._radar_dark_mode,
+                api_client=self._api,
+            ).build()
+        except ValueError:
+            animation = None
+
         return ProcessedCoordinatorData(
             current_weather=self._api.get_current_weather(tz),
             daily_forecast=self._api.get_daily_forecast(tz, lang),
             hourly_forecast=self._api.get_hourly_forecast(tz),
-            country=self._api.get_country(),
+            country=country,
+            animation=animation,
             pollen=pollen,
             warnings=self._api.get_warnings(lang),
         )
