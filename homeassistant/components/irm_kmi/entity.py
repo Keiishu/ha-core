@@ -24,5 +24,5 @@ class IrmKmiBaseEntity(CoordinatorEntity[IrmKmiCoordinator]):
         self._attr_device_info = DeviceInfo(
             entry_type=DeviceEntryType.SERVICE,
             identifiers={(DOMAIN, entry.entry_id)},
-            manufacturer=IRM_KMI_NAME.get(preferred_language(self.hass, entry)),
+            manufacturer=IRM_KMI_NAME.get(preferred_language(coordinator.hass, entry)),
         )
