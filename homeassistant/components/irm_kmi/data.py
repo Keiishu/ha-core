@@ -7,6 +7,7 @@ from irm_kmi_api import (
     ExtendedForecast,
     PollenLevel,
     PollenName,
+    RadarForecast,
     RainGraph,
     WarningData,
 )
@@ -25,3 +26,4 @@ class ProcessedCoordinatorData:
     warnings: list[WarningData] = field(default_factory=list)
     hourly_forecast: list[Forecast] = field(default_factory=list)
     daily_forecast: list[ExtendedForecast] = field(default_factory=list)
+    radar_forecast: list[RadarForecast] = field(default_factory=list)

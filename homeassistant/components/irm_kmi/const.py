@@ -40,6 +40,8 @@ CONF_RADAR_DARK_MODE: Final = "radar_dark_mode"
 CONF_RADAR_STYLE: Final = "radar_style"
 DEFAULT_RADAR_DARK_MODE: Final = False
 DEFAULT_RADAR_STYLE: Final = RadarStyle.OPTION_STYLE_STD.value
+ATTR_INCLUDE_PAST_FORECASTS: Final = "include_past_forecasts"
+SERVICE_GET_FORECASTS_RADAR: Final = "get_forecasts_radar"
 
 POLLEN_TO_ICON_MAP: Final = {
     PollenName.ALDER: "mdi:tree",

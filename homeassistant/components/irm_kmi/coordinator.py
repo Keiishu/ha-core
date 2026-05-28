@@ -150,5 +150,6 @@ class IrmKmiCoordinator(TimestampDataUpdateCoordinator[ProcessedCoordinatorData]
             country=country,
             animation=animation,
             pollen=pollen,
+            radar_forecast=self._api.get_radar_forecast(),
             warnings=self._api.get_warnings(lang),
         )

@@ -1,6 +1,9 @@
 """Support for IRM KMI weather."""
 
+from datetime import datetime
+
 from irm_kmi_api import CurrentWeatherData
+import voluptuous as vol
 
 from homeassistant.components.weather import (
     Forecast,
@@ -14,9 +17,12 @@ from homeassistant.const import (
     UnitOfSpeed,
     UnitOfTemperature,
 )
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, ServiceResponse, SupportsResponse
+from homeassistant.helpers import config_validation as cv, entity_platform
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+from homeassistant.util import dt as dt_util
 
+from .const import ATTR_INCLUDE_PAST_FORECASTS, SERVICE_GET_FORECASTS_RADAR
 from .coordinator import IrmKmiConfigEntry, IrmKmiCoordinator
 from .entity import IrmKmiBaseEntity
 
@@ -27,6 +33,19 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the weather entry."""
+    platform = entity_platform.async_get_current_platform()
+
+    platform.async_register_entity_service(
+        SERVICE_GET_FORECASTS_RADAR,
+        cv.make_entity_service_schema(
+            {
+                vol.Optional(ATTR_INCLUDE_PAST_FORECASTS, default=False): cv.boolean,
+            }
+        ),
+        "get_forecasts_radar",
+        supports_response=SupportsResponse.ONLY,
+    )
+
     async_add_entities([IrmKmiWeather(entry)])
 
 
@@ -113,6 +132,26 @@ class IrmKmiWeather(
     def _async_forecast_hourly(self) -> list[Forecast] | None:
         """Return the hourly forecast in native units."""
         return self.coordinator.data.hourly_forecast
+
+    def get_forecasts_radar(
+        self, include_past_forecasts: bool = False
+    ) -> ServiceResponse:
+        """Return the radar forecast."""
+        current_interval = dt_util.now()
+        current_interval = current_interval.replace(
+            minute=(current_interval.minute // 10) * 10,
+            second=0,
+            microsecond=0,
+        )
+
+        return {
+            "forecast": [
+                forecast
+                for forecast in self.coordinator.data.radar_forecast
+                if include_past_forecasts
+                or datetime.fromisoformat(forecast["datetime"]) >= current_interval
+            ]
+        }
 
     def daily_forecast(self) -> list[Forecast] | None:
         """Return the daily forecast in native units."""

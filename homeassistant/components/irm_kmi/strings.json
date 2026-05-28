@@ -36,6 +36,9 @@
       }
     },
     "sensor": {
+      "current_rainfall": {
+        "name": "Rainfall"
+      },
       "next_warning": {
         "name": "Next warning"
       },
@@ -159,6 +162,18 @@
         "standard_style": "Standard",
         "yellow_red_style": "Yellow-red"
       }
+    }
+  },
+  "services": {
+    "get_forecasts_radar": {
+      "description": "Retrieves precipitation forecasts from the rain radar.",
+      "fields": {
+        "include_past_forecasts": {
+          "description": "Whether past radar forecast intervals should be included.",
+          "name": "Include past forecasts"
+        }
+      },
+      "name": "Get radar forecasts"
     }
   },
   "title": "Royal Meteorological Institute of Belgium"

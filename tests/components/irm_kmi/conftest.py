@@ -85,6 +85,7 @@ def mock_irm_kmi_api(request: pytest.FixtureRequest) -> Generator[MagicMock]:
         irm_kmi.get_forecasts_coord.return_value = forecast
         irm_kmi.get_animation_data.side_effect = ValueError
         irm_kmi.get_pollen.return_value = PollenParser.get_unavailable_data()
+        irm_kmi.get_radar_forecast.return_value = []
         irm_kmi.get_warnings.return_value = []
         yield irm_kmi
 
@@ -107,6 +108,10 @@ def mock_irm_kmi_api_nl():
             "homeassistant.components.irm_kmi.coordinator.IrmKmiApiClientHa.get_animation_data",
             side_effect=ValueError,
         ),
+        patch(
+            "homeassistant.components.irm_kmi.coordinator.IrmKmiApiClientHa.get_radar_forecast",
+            return_value=[],
+        ),
     ):
         yield
 
@@ -128,6 +133,10 @@ def mock_irm_kmi_api_high_low_temp():
         patch(
             "homeassistant.components.irm_kmi.coordinator.IrmKmiApiClientHa.get_animation_data",
             side_effect=ValueError,
+        ),
+        patch(
+            "homeassistant.components.irm_kmi.coordinator.IrmKmiApiClientHa.get_radar_forecast",
+            return_value=[],
         ),
     ):
         yield

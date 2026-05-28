@@ -1,0 +1,7 @@
+{
+  "services": {
+    "get_forecasts_radar": {
+      "service": "mdi:weather-cloudy-clock"
+    }
+  }
+}
