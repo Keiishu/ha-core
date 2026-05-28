@@ -74,14 +74,14 @@ class IrmKmiCurrentRainfallSensor(IrmKmiBaseEntity, SensorEntity):
             return None
 
         now = dt_util.now()
-        previous_forecast = forecasts[0]
+        previous_forecast: RadarForecast | None = None
 
         for forecast in forecasts:
             if datetime.fromisoformat(forecast["datetime"]) > now:
                 return previous_forecast
             previous_forecast = forecast
 
-        return forecasts[-1]
+        return previous_forecast
 
     @property
     def native_value(self) -> float | None:
