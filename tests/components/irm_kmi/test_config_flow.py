@@ -17,6 +17,7 @@ from homeassistant.const import (
     ATTR_LONGITUDE,
     CONF_LOCATION,
     CONF_UNIQUE_ID,
+    CONF_ZONE,
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
@@ -24,11 +25,10 @@ from homeassistant.data_entry_flow import FlowResultType
 from tests.common import MockConfigEntry
 
 
-@pytest.mark.usefixtures("mock_setup_entry")
-async def test_full_user_flow(
-    hass: HomeAssistant, mock_get_forecast_in_benelux: MagicMock
-) -> None:
-    """Test the full user configuration flow."""
+async def _async_select_home_zone(
+    hass: HomeAssistant,
+) -> dict:
+    """Start the user flow and select the home zone."""
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": SOURCE_USER}
     )
@@ -38,31 +38,47 @@ async def test_full_user_flow(
 
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"],
+        user_input={CONF_ZONE: "zone.home"},
+    )
+
+    assert result.get("type") is FlowResultType.FORM
+    assert result.get("step_id") == "confirm"
+
+    return result
+
+
+@pytest.mark.usefixtures("mock_setup_entry")
+async def test_full_user_flow(
+    hass: HomeAssistant, mock_get_forecast_in_benelux: MagicMock
+) -> None:
+    """Test the full user configuration flow."""
+    result = await _async_select_home_zone(hass)
+
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
         user_input={CONF_LOCATION: {ATTR_LATITUDE: 50.123, ATTR_LONGITUDE: 4.456}},
     )
+    assert result.get("type") is FlowResultType.FORM
+    assert result.get("step_id") == "radar"
+
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        user_input={
+            CONF_RADAR_DARK_MODE: True,
+            CONF_RADAR_STYLE: RadarStyle.OPTION_STYLE_SATELLITE.value,
+        },
+    )
+
     assert result.get("type") is FlowResultType.CREATE_ENTRY
     assert result.get("title") == "Brussels"
     assert result.get("data") == {
         CONF_LOCATION: {ATTR_LATITUDE: 50.123, ATTR_LONGITUDE: 4.456},
         CONF_UNIQUE_ID: "brussels be",
     }
-
-
-@pytest.mark.usefixtures("mock_setup_entry")
-async def test_user_flow_home(
-    hass: HomeAssistant, mock_get_forecast_in_benelux: MagicMock
-) -> None:
-    """Test the full user configuration flow."""
-    result = await hass.config_entries.flow.async_init(
-        DOMAIN, context={"source": SOURCE_USER}
-    )
-
-    result = await hass.config_entries.flow.async_configure(
-        result["flow_id"],
-        user_input={CONF_LOCATION: {ATTR_LATITUDE: 50.123, ATTR_LONGITUDE: 4.456}},
-    )
-    assert result.get("type") is FlowResultType.CREATE_ENTRY
-    assert result.get("title") == "Brussels"
+    assert result.get("options") == {
+        CONF_RADAR_DARK_MODE: True,
+        CONF_RADAR_STYLE: RadarStyle.OPTION_STYLE_SATELLITE.value,
+    }
 
 
 @pytest.mark.usefixtures("mock_setup_entry")
@@ -70,9 +86,7 @@ async def test_config_flow_location_out_benelux(
     hass: HomeAssistant, mock_get_forecast_out_benelux_then_in_belgium: MagicMock
 ) -> None:
     """Test configuration flow with a zone outside of Benelux."""
-    result = await hass.config_entries.flow.async_init(
-        DOMAIN, context={"source": SOURCE_USER}
-    )
+    result = await _async_select_home_zone(hass)
 
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"],
@@ -80,14 +94,8 @@ async def test_config_flow_location_out_benelux(
     )
 
     assert result.get("type") is FlowResultType.FORM
-    assert result.get("step_id") == "user"
+    assert result.get("step_id") == "confirm"
     assert CONF_LOCATION in result.get("errors")
-
-    result = await hass.config_entries.flow.async_configure(
-        result["flow_id"],
-        user_input={CONF_LOCATION: {ATTR_LATITUDE: 50.123, ATTR_LONGITUDE: 4.456}},
-    )
-    assert result.get("type") is FlowResultType.CREATE_ENTRY
 
 
 @pytest.mark.usefixtures("mock_setup_entry")
@@ -95,9 +103,7 @@ async def test_config_flow_with_api_error(
     hass: HomeAssistant, mock_get_forecast_api_error: MagicMock
 ) -> None:
     """Test when API returns an error during the configuration flow."""
-    result = await hass.config_entries.flow.async_init(
-        DOMAIN, context={"source": SOURCE_USER}
-    )
+    result = await _async_select_home_zone(hass)
 
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"],
@@ -112,20 +118,23 @@ async def test_setup_twice_same_location(
     hass: HomeAssistant, mock_get_forecast_in_benelux: MagicMock
 ) -> None:
     """Test when the user tries to set up the weather twice for the same location."""
-    result = await hass.config_entries.flow.async_init(
-        DOMAIN, context={"source": SOURCE_USER}
-    )
+    result = await _async_select_home_zone(hass)
 
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"],
         user_input={CONF_LOCATION: {ATTR_LATITUDE: 50.5, ATTR_LONGITUDE: 4.6}},
     )
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        user_input={
+            CONF_RADAR_DARK_MODE: False,
+            CONF_RADAR_STYLE: RadarStyle.OPTION_STYLE_STD.value,
+        },
+    )
     assert result.get("type") is FlowResultType.CREATE_ENTRY
 
     # Set up a second time
-    result = await hass.config_entries.flow.async_init(
-        DOMAIN, context={"source": SOURCE_USER}
-    )
+    result = await _async_select_home_zone(hass)
 
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"],

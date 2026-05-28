@@ -1,10 +1,13 @@
 """Config flow to set up IRM KMI integration via the UI."""
 
+from collections.abc import Mapping
 import logging
+from typing import Any
 
 from irm_kmi_api import IrmKmiApiClient, IrmKmiApiError, RadarStyle
 import voluptuous as vol
 
+from homeassistant.components.zone import DOMAIN as ZONE_DOMAIN
 from homeassistant.config_entries import (
     ConfigFlow,
     ConfigFlowResult,
@@ -16,10 +19,13 @@ from homeassistant.const import (
     ATTR_LONGITUDE,
     CONF_LOCATION,
     CONF_UNIQUE_ID,
+    CONF_ZONE,
 )
 from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.selector import (
+    EntitySelector,
+    EntitySelectorConfig,
     LocationSelector,
     SelectSelector,
     SelectSelectorConfig,
@@ -41,11 +47,16 @@ from .coordinator import IrmKmiConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
 
+ZONE_HOME = "zone.home"
+
 
 class IrmKmiConfigFlow(ConfigFlow, domain=DOMAIN):
     """Configuration flow for the IRM KMI integration."""
 
     VERSION = 1
+    _location: dict[str, float] | None = None
+    _title: str | None = None
+    _unique_id: str | None = None
 
     @staticmethod
     @callback
@@ -57,16 +68,47 @@ class IrmKmiConfigFlow(ConfigFlow, domain=DOMAIN):
         """Define the user step of the configuration flow."""
         errors: dict = {}
 
-        default_location = {
+        if user_input:
+            _LOGGER.debug("Provided config user is: %s", user_input)
+
+            zone = self.hass.states.get(user_input[CONF_ZONE])
+            if zone is None:
+                errors[CONF_ZONE] = "zone_not_found"
+            else:
+                self._location = {
+                    ATTR_LATITUDE: zone.attributes[ATTR_LATITUDE],
+                    ATTR_LONGITUDE: zone.attributes[ATTR_LONGITUDE],
+                }
+                return await self.async_step_confirm()
+
+        return self.async_show_form(
+            step_id="user",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_ZONE, default=ZONE_HOME): EntitySelector(
+                        EntitySelectorConfig(domain=ZONE_DOMAIN)
+                    )
+                }
+            ),
+            errors=errors,
+        )
+
+    async def async_step_confirm(
+        self, user_input: dict | None = None
+    ) -> ConfigFlowResult:
+        """Confirm the location to use for weather data."""
+        errors: dict = {}
+
+        default_location = self._location or {
             ATTR_LATITUDE: self.hass.config.latitude,
             ATTR_LONGITUDE: self.hass.config.longitude,
         }
 
         if user_input:
             _LOGGER.debug("Provided config user is: %s", user_input)
-
-            lat: float = user_input[CONF_LOCATION][ATTR_LATITUDE]
-            lon: float = user_input[CONF_LOCATION][ATTR_LONGITUDE]
+            location = user_input[CONF_LOCATION]
+            lat: float = location[ATTR_LATITUDE]
+            lon: float = location[ATTR_LONGITUDE]
 
             try:
                 api_data = await IrmKmiApiClient(
@@ -88,13 +130,16 @@ class IrmKmiConfigFlow(ConfigFlow, domain=DOMAIN):
                 unique_id: str = f"{name.lower()} {country.lower()}"
                 await self.async_set_unique_id(unique_id)
                 self._abort_if_unique_id_configured()
-                user_input[CONF_UNIQUE_ID] = unique_id
+                self._location = location
+                self._title = name
+                self._unique_id = unique_id
 
-                return self.async_create_entry(title=name, data=user_input)
+                return await self.async_step_radar()
 
-            default_location = user_input[CONF_LOCATION]
+            default_location = location
+
         return self.async_show_form(
-            step_id="user",
+            step_id="confirm",
             data_schema=vol.Schema(
                 {
                     vol.Required(
@@ -103,6 +148,34 @@ class IrmKmiConfigFlow(ConfigFlow, domain=DOMAIN):
                 }
             ),
             errors=errors,
+        )
+
+    async def async_step_radar(
+        self, user_input: dict | None = None
+    ) -> ConfigFlowResult:
+        """Configure radar options."""
+        if user_input is not None:
+            _LOGGER.debug("Provided config user is: %s", user_input)
+
+            return self.async_create_entry(
+                title=self._title or "IRM KMI",
+                data={
+                    CONF_LOCATION: self._location,
+                    CONF_UNIQUE_ID: self._unique_id,
+                },
+                options={
+                    CONF_RADAR_DARK_MODE: user_input.get(
+                        CONF_RADAR_DARK_MODE, DEFAULT_RADAR_DARK_MODE
+                    ),
+                    CONF_RADAR_STYLE: user_input.get(
+                        CONF_RADAR_STYLE, DEFAULT_RADAR_STYLE
+                    ),
+                },
+            )
+
+        return self.async_show_form(
+            step_id="radar",
+            data_schema=vol.Schema(_radar_options_schema({})),
         )
 
 
@@ -120,38 +193,42 @@ class IrmKmiOptionFlow(OptionsFlowWithReload):
 
         return self.async_show_form(
             step_id="init",
-            data_schema=vol.Schema(
-                {
-                    vol.Optional(
-                        CONF_LANGUAGE_OVERRIDE,
-                        default=self.config_entry.options.get(
-                            CONF_LANGUAGE_OVERRIDE, "none"
-                        ),
-                    ): SelectSelector(
-                        SelectSelectorConfig(
-                            options=CONF_LANGUAGE_OVERRIDE_OPTIONS,
-                            mode=SelectSelectorMode.DROPDOWN,
-                            translation_key=CONF_LANGUAGE_OVERRIDE,
-                        )
-                    ),
-                    vol.Optional(
-                        CONF_RADAR_STYLE,
-                        default=self.config_entry.options.get(
-                            CONF_RADAR_STYLE, DEFAULT_RADAR_STYLE
-                        ),
-                    ): SelectSelector(
-                        SelectSelectorConfig(
-                            options=[style.value for style in RadarStyle],
-                            mode=SelectSelectorMode.DROPDOWN,
-                            translation_key=CONF_RADAR_STYLE,
-                        )
-                    ),
-                    vol.Optional(
-                        CONF_RADAR_DARK_MODE,
-                        default=self.config_entry.options.get(
-                            CONF_RADAR_DARK_MODE, DEFAULT_RADAR_DARK_MODE
-                        ),
-                    ): bool,
-                }
-            ),
+            data_schema=vol.Schema(_options_schema(self.config_entry.options)),
         )
+
+
+def _radar_options_schema(options: Mapping[str, Any]) -> dict:
+    """Return the schema fields for radar options."""
+    return {
+        vol.Optional(
+            CONF_RADAR_STYLE,
+            default=options.get(CONF_RADAR_STYLE, DEFAULT_RADAR_STYLE),
+        ): SelectSelector(
+            SelectSelectorConfig(
+                options=[style.value for style in RadarStyle],
+                mode=SelectSelectorMode.DROPDOWN,
+                translation_key=CONF_RADAR_STYLE,
+            )
+        ),
+        vol.Optional(
+            CONF_RADAR_DARK_MODE,
+            default=options.get(CONF_RADAR_DARK_MODE, DEFAULT_RADAR_DARK_MODE),
+        ): bool,
+    }
+
+
+def _options_schema(options: Mapping[str, Any]) -> dict:
+    """Return the schema fields for integration options."""
+    return {
+        **_radar_options_schema(options),
+        vol.Optional(
+            CONF_LANGUAGE_OVERRIDE,
+            default=options.get(CONF_LANGUAGE_OVERRIDE, "none"),
+        ): SelectSelector(
+            SelectSelectorConfig(
+                options=CONF_LANGUAGE_OVERRIDE_OPTIONS,
+                mode=SelectSelectorMode.DROPDOWN,
+                translation_key=CONF_LANGUAGE_OVERRIDE,
+            )
+        ),
+    }

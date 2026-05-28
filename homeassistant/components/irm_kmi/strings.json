@@ -11,16 +11,38 @@
       "unknown": "[%key:common::config_flow::error::unknown%]"
     },
     "error": {
-      "out_of_benelux": "The location is outside of Benelux. Pick a location in Benelux."
+      "out_of_benelux": "The location is outside of Benelux. Pick a location in Benelux.",
+      "zone_not_found": "Zone not found."
     },
     "step": {
-      "user": {
+      "confirm": {
         "data": {
           "location": "[%key:common::config_flow::data::location%]"
         },
         "data_description": {
-          "location": "[%key:common::config_flow::data::location%]"
-        }
+          "location": "Confirm or adjust the location to use for weather data."
+        },
+        "title": "Confirm location"
+      },
+      "radar": {
+        "data": {
+          "radar_dark_mode": "Dark radar map",
+          "radar_style": "Radar style"
+        },
+        "data_description": {
+          "radar_dark_mode": "[%key:component::irm_kmi::common::radar_dark_mode_description%]",
+          "radar_style": "[%key:component::irm_kmi::common::radar_style_description%]"
+        },
+        "title": "Radar options"
+      },
+      "user": {
+        "data": {
+          "zone": "Zone"
+        },
+        "data_description": {
+          "zone": "Select a zone to prefill the weather location."
+        },
+        "title": "Select zone"
       }
     }
   },
